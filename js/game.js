@@ -653,6 +653,7 @@ function addMsg(text) {
 
 async function addToHallOfFame(p, floor, epitaph) {
   try {
+    console.log('[HoF] sb client:', sb);
     const newEntry = {
       name:    p.name,
       floor,
@@ -660,13 +661,14 @@ async function addToHallOfFame(p, floor, epitaph) {
       atk:     p.atk,
       def:     p.def,
       epitaph,
-      date:    new Date().toLocaleDateString(),
     };
+    console.log('[HoF] inserting:', newEntry);
     const { data: inserted, error: insertErr } = await sb
       .from('hall_of_fame')
       .insert(newEntry)
       .select('id')
       .single();
+    console.log('[HoF] insert result — data:', inserted, 'error:', insertErr);
     if (insertErr) throw insertErr;
 
     const { data: rows, error: fetchErr } = await sb
@@ -675,12 +677,14 @@ async function addToHallOfFame(p, floor, epitaph) {
       .order('floor', { ascending: false })
       .order('kills', { ascending: false })
       .limit(HOF_MAX);
+    console.log('[HoF] fetch result — rows:', rows, 'error:', fetchErr);
     if (fetchErr) throw fetchErr;
 
     const currentIdx = rows.findIndex(r => r.id === inserted.id);
+    console.log('[HoF] currentIdx:', currentIdx);
     return { entries: rows, currentIdx };
   } catch (err) {
-    console.error('HoF error:', err);
+    console.error('[HoF] FAILED:', err);
     return { entries: [], currentIdx: -1 };
   }
 }
@@ -728,7 +732,7 @@ async function showDeath() {
         `<td>${e.name}</td>` +
         `<td>${e.floor}</td>` +
         `<td>${e.kills}</td>` +
-        `<td>${e.date}</td>` +
+        `<td>${new Date(e.created_at).toLocaleDateString()}</td>` +
       `</tr>`
     ).join('');
   }
