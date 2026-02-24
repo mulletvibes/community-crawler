@@ -719,7 +719,7 @@ function subscribeRealtime() {
     .on('postgres_changes',
       { event: 'UPDATE', schema: 'public', table: 'game_state', filter: 'id=eq.1' },
       (payload) => {
-        if (payload.new.version <= currentVersion) return;
+        if (payload.new.version < currentVersion) return;
         hydrate(payload.new);
       })
     .subscribe();
