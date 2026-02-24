@@ -14,6 +14,8 @@ const MIN_SPAWN_DIST = 8;
 const ROUND_DURATION = 10;
 const DEATH_DELAY    = 15;   // seconds before auto-restart
 const HOF_MAX        = 10;
+const CHAT_MAX_LEN   = 120;
+const CHAT_HISTORY   = 40;
 
 const SUPABASE_URL = 'https://uzdeqporpuioziaokilw.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV6ZGVxcG9ycHVpb3ppYW9raWx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4NzMzNjMsImV4cCI6MjA4NzQ0OTM2M30.dHNbMEWdtD8MBOoQ7qKbBRpAfPm3kVKIZ1ax_kysSS4';
@@ -97,6 +99,15 @@ let display, map, player, enemies, items, stairs, messages,
 // Supabase sync metadata
 let currentVersion, roundEndsAt, realtimeChannel, isExecutingRound;
 
+// Chat & presence
+let displayName, presenceChannel;
+
+const CLIENT_ID = (() => {
+  let id = sessionStorage.getItem('cc_cid');
+  if (!id) { id = Math.random().toString(36).slice(2, 10); sessionStorage.setItem('cc_cid', id); }
+  return id;
+})();
+
 // ============================================================
 // UTILITIES
 // ============================================================
@@ -123,6 +134,7 @@ async function init() {
 
   initVoteUI();
   initCollapsibles();
+  initChat();
 
   const { data, error } = await sb.from('game_state').select('*').eq('id', 1).single();
 
@@ -896,6 +908,117 @@ async function restart() {
     startTimer();
   }
   // If !committed: Realtime delivers winner's new run via hydrate()
+}
+
+// ============================================================
+// CHAT & PRESENCE
+// ============================================================
+
+function hasLink(text) {
+  return /https?:\/\/|www\.\S|\S+\.(com|net|org|io|co|uk)\b/i.test(text);
+}
+
+function initChat() {
+  displayName = localStorage.getItem('cc_name') || 'Anon';
+
+  const nameInput = document.getElementById('chat-name-input');
+  if (nameInput) {
+    nameInput.value = displayName === 'Anon' ? '' : displayName;
+    nameInput.addEventListener('blur', () => {
+      const v = nameInput.value.trim().slice(0, 20);
+      displayName = v || 'Anon';
+      if (v) localStorage.setItem('cc_name', v);
+      else   localStorage.removeItem('cc_name');
+    });
+  }
+
+  const chatInput = document.getElementById('chat-input');
+  const sendBtn   = document.getElementById('chat-send');
+  if (chatInput) chatInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); sendChat(); } });
+  if (sendBtn)   sendBtn.addEventListener('click', sendChat);
+
+  loadChatHistory();
+  subscribeChatRealtime();
+  initPresence();
+}
+
+async function loadChatHistory() {
+  const { data, error } = await sb
+    .from('chat_messages')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(CHAT_HISTORY);
+  if (error) { console.error('[chat] load', error); return; }
+  const el = document.getElementById('chat-messages');
+  if (!el) return;
+  el.innerHTML = '';
+  (data || []).reverse().forEach(row => appendChatMessage(row, false));
+}
+
+function subscribeChatRealtime() {
+  sb.channel('chat-inserts')
+    .on('postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'chat_messages' },
+      payload => appendChatMessage(payload.new, true))
+    .subscribe();
+}
+
+function sendChat() {
+  const input = document.getElementById('chat-input');
+  if (!input) return;
+  const msg = input.value.trim();
+  if (!msg || msg.length > CHAT_MAX_LEN) return;
+  if (hasLink(msg)) {
+    input.value = '';
+    const prev = input.placeholder;
+    input.placeholder = 'No links allowed.';
+    setTimeout(() => { input.placeholder = prev; }, 2000);
+    return;
+  }
+  input.value = '';
+  sb.from('chat_messages')
+    .insert({ display_name: displayName, message: msg })
+    .then(({ error }) => { if (error) console.error('[chat] send', error); });
+}
+
+function appendChatMessage(row, scroll) {
+  const el = document.getElementById('chat-messages');
+  if (!el) return;
+
+  const div      = document.createElement('div');
+  div.className  = 'chat-msg';
+  div.innerHTML  =
+    `<span class="chat-msg-name">${escapeHtml(row.display_name)}:</span>` +
+    `<span class="chat-msg-text"> ${escapeHtml(row.message)}</span>`;
+  el.appendChild(div);
+
+  while (el.children.length > CHAT_HISTORY) el.removeChild(el.firstChild);
+  if (scroll) el.scrollTop = el.scrollHeight;
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function initPresence() {
+  presenceChannel = sb.channel('lobby', {
+    config: { presence: { key: CLIENT_ID } },
+  });
+  presenceChannel
+    .on('presence', { event: 'sync' }, () => {
+      const count = Object.keys(presenceChannel.presenceState()).length;
+      const el = document.getElementById('ui-viewers');
+      if (el) el.textContent = `Viewers: ${count}`;
+    })
+    .subscribe(async status => {
+      if (status === 'SUBSCRIBED') {
+        await presenceChannel.track({ joined_at: new Date().toISOString() });
+      }
+    });
 }
 
 // ============================================================

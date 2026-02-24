@@ -10,7 +10,22 @@
   <h1>Community Crawler</h1>
 
   <div id="game-layout">
-    <div id="canvas-container"></div>
+    <div id="left-col">
+      <div id="canvas-container"></div>
+
+      <div class="panel" id="chat-panel">
+        <h3>Chat</h3>
+        <div id="chat-name-row">
+          <label for="chat-name-input" class="chat-name-label">Name</label>
+          <input id="chat-name-input" type="text" placeholder="Anon" maxlength="20" autocomplete="off" spellcheck="false">
+        </div>
+        <div id="chat-messages"></div>
+        <div id="chat-input-row">
+          <input id="chat-input" type="text" placeholder="Say something…" maxlength="120" autocomplete="off" spellcheck="false">
+          <button id="chat-send">Send</button>
+        </div>
+      </div>
+    </div>
 
     <div id="right-panel">
       <div class="panel" id="status-panel">

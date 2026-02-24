@@ -1,0 +1,514 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg:     #0d0d0d;
+  --bg2:    #161616;
+  --border: #2e2e2e;
+  --text:   #bbb;
+  --dim:    #555;
+  --gold:   #c8a060;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Courier New', Courier, monospace;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 20px 40px;
+}
+
+h1 {
+  color: var(--gold);
+  letter-spacing: 0.25em;
+  margin-bottom: 16px;
+  font-size: 1.3rem;
+  text-transform: uppercase;
+}
+
+#game-layout {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+#left-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#canvas-container canvas {
+  display: block;
+  border: 1px solid var(--border);
+}
+
+#right-panel {
+  width: 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.panel {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  padding: 12px;
+}
+
+.panel h3 {
+  color: var(--gold);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 6px;
+}
+
+#ui-name {
+  font-size: 1rem;
+  color: #ddd;
+  margin-bottom: 8px;
+}
+
+#ui-hp {
+  font-size: 0.9rem;
+  font-weight: bold;
+  margin-bottom: 6px;
+}
+
+.hp-high { color: #4c4; }
+.hp-mid  { color: #cc4; }
+.hp-low  { color: #c44; }
+
+.stat-row {
+  display: flex;
+  gap: 12px;
+  font-size: 0.82rem;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+#ui-floor,
+#ui-kills,
+#ui-viewers {
+  font-size: 0.78rem;
+  color: var(--dim);
+  margin-top: 3px;
+}
+
+#message-list {
+  font-size: 0.76rem;
+  line-height: 1.6;
+  color: var(--text);
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+#message-list div {
+  padding: 1px 0;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+#message-list div:last-child {
+  color: #e0e0e0;
+}
+
+/* Collapsible panels */
+.panel.collapsible .panel-toggle {
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  /* Remove the h3 separator — it lives on panel-body instead,
+     so padding is always symmetric and the chevron stays centred */
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.panel.collapsible .panel-body {
+  border-top: 1px solid var(--border);
+  margin-top: 8px;
+}
+
+.panel.collapsible.collapsed .panel-body {
+  display: none;
+}
+
+.toggle-icon {
+  font-size: 0.75rem;
+  margin-left: auto;
+  letter-spacing: 0;
+  transition: transform 0.15s ease;
+  line-height: 1;
+}
+
+.panel.collapsible.collapsed .toggle-icon {
+  transform: rotate(-90deg);
+}
+
+#codex-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.codex-entry {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.78rem;
+}
+
+.codex-char {
+  font-size: 1rem;
+  line-height: 1;
+  min-width: 14px;
+  text-align: center;
+  padding-top: 1px;
+}
+
+.codex-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.codex-name {
+  color: #ddd;
+}
+
+.codex-desc {
+  color: var(--dim);
+  font-size: 0.72rem;
+}
+
+/* Vote panel */
+#vote-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 10px;
+}
+
+.vote-btn {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 5px 8px;
+  background: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  color: #888;
+  font-family: inherit;
+  font-size: 0.76rem;
+  cursor: pointer;
+  text-align: left;
+  gap: 4px;
+}
+
+.vote-btn:hover {
+  background: #222;
+  border-color: #444;
+  color: #bbb;
+}
+
+.vote-btn.has-votes {
+  border-color: var(--gold);
+  color: #ddd;
+}
+
+.vote-label {
+  flex: 1;
+}
+
+.vote-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.vote-key {
+  color: #555;
+  font-size: 0.7rem;
+}
+
+.vote-btn.has-votes .vote-key {
+  color: #888;
+}
+
+.vote-count {
+  color: var(--gold);
+  font-size: 0.85rem;
+  min-width: 12px;
+  text-align: right;
+}
+
+#vote-timer {
+  border-top: 1px solid var(--border);
+  padding-top: 8px;
+}
+
+#timer-bar-track {
+  height: 3px;
+  background: #1a1a1a;
+  margin-bottom: 6px;
+}
+
+#timer-bar-fill {
+  height: 100%;
+  background: var(--gold);
+  width: 100%;
+  transition: width 0.9s linear;
+}
+
+#timer-text {
+  font-size: 0.74rem;
+  color: var(--dim);
+  text-align: center;
+}
+
+#timer-value {
+  color: #aaa;
+}
+
+/* Death overlay */
+#death-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.9);
+  z-index: 10;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+#death-screen {
+  background: var(--bg2);
+  border: 1px solid #444;
+  padding: 32px 40px;
+  text-align: center;
+  width: 560px;
+  max-width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+#death-screen h2 {
+  color: #c44;
+  font-size: 1.2rem;
+  margin-bottom: 20px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* Death hero block */
+#death-hero {
+  margin-bottom: 24px;
+}
+
+#death-name {
+  font-size: 1.15rem;
+  color: #fff;
+  margin-bottom: 6px;
+}
+
+#death-run-stats {
+  font-size: 0.8rem;
+  color: #777;
+  margin-bottom: 10px;
+  letter-spacing: 0.03em;
+}
+
+#death-epitaph {
+  font-size: 0.85rem;
+  color: #999;
+  font-style: italic;
+  line-height: 1.55;
+}
+
+/* Hall of Fame */
+#death-hof {
+  border-top: 1px solid var(--border);
+  padding-top: 20px;
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+#death-hof h3 {
+  color: var(--gold);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+#hof-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+}
+
+#hof-table th {
+  color: var(--dim);
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+
+#hof-table td {
+  padding: 5px 8px;
+  color: #777;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+#hof-table tr.hof-current td {
+  color: var(--gold);
+}
+
+#hof-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Death footer */
+#death-footer {
+  border-top: 1px solid var(--border);
+  padding-top: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+#restart-countdown {
+  font-size: 0.78rem;
+  color: var(--dim);
+}
+
+#countdown-value {
+  color: #aaa;
+}
+
+#restart-btn {
+  padding: 9px 28px;
+  background: none;
+  border: 1px solid #666;
+  color: #ccc;
+  font-family: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+#restart-btn:hover {
+  background: #2a2a2a;
+  border-color: #aaa;
+  color: #fff;
+}
+
+/* ── Chat panel ─────────────────────────────────────────────── */
+
+#chat-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.chat-name-label {
+  font-size: 0.72rem;
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+}
+
+#chat-name-input {
+  width: 140px;
+  background: #111;
+  border: 1px solid #2a2a2a;
+  color: #bbb;
+  font-family: inherit;
+  font-size: 0.76rem;
+  padding: 3px 7px;
+}
+
+#chat-name-input:focus {
+  outline: none;
+  border-color: #444;
+}
+
+#chat-messages {
+  height: 110px;
+  overflow-y: auto;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 5px 0;
+  margin-bottom: 8px;
+}
+
+.chat-msg {
+  font-size: 0.76rem;
+  line-height: 1.55;
+  padding: 1px 0;
+  word-break: break-word;
+}
+
+.chat-msg-name {
+  color: var(--gold);
+}
+
+.chat-msg-text {
+  color: var(--text);
+}
+
+#chat-input-row {
+  display: flex;
+  gap: 6px;
+}
+
+#chat-input {
+  flex: 1;
+  background: #111;
+  border: 1px solid #2a2a2a;
+  color: #bbb;
+  font-family: inherit;
+  font-size: 0.76rem;
+  padding: 4px 8px;
+}
+
+#chat-input:focus {
+  outline: none;
+  border-color: #444;
+}
+
+#chat-send {
+  background: none;
+  border: 1px solid #444;
+  color: #888;
+  font-family: inherit;
+  font-size: 0.76rem;
+  padding: 4px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+#chat-send:hover {
+  background: #1a1a1a;
+  border-color: #888;
+  color: #ccc;
+}
