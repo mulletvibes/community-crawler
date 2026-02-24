@@ -94,6 +94,9 @@ let display, map, player, enemies, items, stairs, messages,
     votes, timeLeft, timerInterval,
     deathTimer, deathTimeLeft;
 
+// Supabase sync metadata
+let currentVersion, roundEndsAt, realtimeChannel, isExecutingRound;
+
 // ============================================================
 // UTILITIES
 // ============================================================
@@ -107,7 +110,7 @@ const an    = (word)   => /^[aeiou]/i.test(word) ? `an ${word}` : `a ${word}`;
 // INITIALISATION
 // ============================================================
 
-function init() {
+async function init() {
   display = new ROT.Display({
     width:      MAP_W,
     height:     MAP_H,
@@ -118,20 +121,19 @@ function init() {
   });
   document.getElementById('canvas-container').appendChild(display.getContainer());
 
-  floorNum   = 1;
-  messages   = [];
-  gameActive = true;
-  discovered = new Set();
-  votes      = initVotes();
-  player     = makePlayer();
-
-  newFloor();
-  addMsg(`${player.name} descends into the dark. Good luck!`);
-
   initVoteUI();
   initCollapsibles();
-  render();
-  startTimer();
+
+  const { data, error } = await sb.from('game_state').select('*').eq('id', 1).single();
+
+  if (data) {
+    hydrate(data);
+  } else {
+    // error.code 'PGRST116' = no rows — bootstrap
+    await createInitialState();
+  }
+
+  subscribeRealtime();
 
   window.addEventListener('keydown', onKey);
   document.getElementById('restart-btn').addEventListener('click', restart);
@@ -373,10 +375,12 @@ function vote(actionId) {
     msgEl.scrollTop = msgEl.scrollHeight;
   }
   updateVoteUI();
+  sb.rpc('increment_vote', { p_action: actionId })
+    .then(({ error }) => { if (error) console.error('[vote]', error); });
 }
 
 function startTimer() {
-  timeLeft = ROUND_DURATION;
+  timeLeft = Math.max(0, Math.ceil((roundEndsAt - Date.now()) / 1000));
   updateTimerUI();
   timerInterval = setInterval(tick, 1000);
 }
@@ -389,38 +393,46 @@ function stopTimer() {
 }
 
 function tick() {
-  timeLeft--;
+  timeLeft = Math.max(0, Math.ceil((roundEndsAt - Date.now()) / 1000));
   updateTimerUI();
-  if (timeLeft <= 0) {
-    stopTimer();
-    executeVote();
-  }
+  if (timeLeft <= 0) { stopTimer(); tryExecuteRound(); }
 }
 
-function executeVote() {
-  if (!gameActive) return;
+async function tryExecuteRound() {
+  if (isExecutingRound || !gameActive) return;
+  isExecutingRound = true;
+  const lockedVersion = currentVersion;
 
+  // Pick winner action
   let maxVotes = 0;
   for (const a of ACTIONS) maxVotes = Math.max(maxVotes, votes[a.id] || 0);
-
   const candidates = maxVotes === 0
     ? [ACTIONS.find(a => a.id === 'wait')]
     : ACTIONS.filter(a => (votes[a.id] || 0) === maxVotes);
-
   const winner = pick(candidates);
+
+  // Run game logic — unchanged functions
   votes = initVotes();
-
   executeAction(winner.id);
-
   if (gameActive) enemyTurns();
   render();
 
-  if (!gameActive) {
-    setTimeout(showDeath, 200);
-    return;
-  }
+  const newState       = serializeState();
+  const newRoundEndsAt = new Date(Date.now() + ROUND_DURATION * 1000).toISOString();
 
-  startTimer();
+  const { data: committed, error } = await sb.rpc('try_commit_round', {
+    p_version: lockedVersion, p_new_state: newState, p_new_round_ends_at: newRoundEndsAt,
+  });
+  isExecutingRound = false;
+  if (error) { console.error('[tryExecuteRound]', error); return; }
+
+  if (committed) {
+    currentVersion++;
+    roundEndsAt = new Date(newRoundEndsAt);
+    if (gameActive) startTimer();
+    else setTimeout(showDeath, 200);
+  }
+  // If !committed: another client won — Realtime delivers their state via hydrate()
 }
 
 function executeAction(id) {
@@ -648,12 +660,104 @@ function addMsg(text) {
 }
 
 // ============================================================
+// SUPABASE SYNC
+// ============================================================
+
+function serializeState() {
+  return {
+    map,
+    player:     { ...player },
+    enemies:    enemies.map(e => ({ ...e })),
+    items:      items.map(i => ({ ...i })),
+    stairs:     stairs ? { ...stairs } : null,
+    messages:   [...messages],
+    discovered: [...discovered],
+    floorNum,
+    gameActive,
+  };
+}
+
+function hydrate(row) {
+  const s = row.state;
+  currentVersion = row.version;
+  roundEndsAt    = new Date(row.round_ends_at);
+  map        = s.map;
+  player     = s.player;
+  enemies    = s.enemies;
+  items      = s.items;
+  stairs     = s.stairs;
+  messages   = s.messages;
+  floorNum   = s.floorNum;
+  gameActive = s.gameActive;
+  discovered = new Set(s.discovered || []);
+  votes = initVotes();
+  if (row.votes) {
+    for (const key of Object.keys(votes)) votes[key] = row.votes[key] || 0;
+  }
+  isExecutingRound = false;
+  stopTimer();
+  const msRemaining = roundEndsAt - Date.now();
+  timeLeft = Math.max(0, Math.ceil(msRemaining / 1000));
+  updateVoteUI();
+  updateTimerUI();
+  updateCodex();
+  render();
+  if (!gameActive) {
+    const overlay = document.getElementById('death-overlay');
+    if (overlay.style.display !== 'flex') setTimeout(showDeath, 200);
+    return;
+  }
+  document.getElementById('death-overlay').style.display = 'none';
+  stopDeathCountdown();
+  if (msRemaining > 0) timerInterval = setInterval(tick, 1000);
+  else tryExecuteRound();
+}
+
+function subscribeRealtime() {
+  if (realtimeChannel) sb.removeChannel(realtimeChannel);
+  realtimeChannel = sb.channel('game-state-changes')
+    .on('postgres_changes',
+      { event: 'UPDATE', schema: 'public', table: 'game_state', filter: 'id=eq.1' },
+      (payload) => {
+        if (payload.new.version <= currentVersion) return;
+        hydrate(payload.new);
+      })
+    .subscribe();
+}
+
+async function createInitialState() {
+  floorNum   = 1;
+  messages   = [];
+  gameActive = true;
+  discovered = new Set();
+  votes      = initVotes();
+  player     = makePlayer();
+  newFloor();
+  addMsg(`${player.name} descends into the dark. Good luck!`);
+
+  const p_state         = serializeState();
+  const p_round_ends_at = new Date(Date.now() + ROUND_DURATION * 1000).toISOString();
+
+  const { data: won, error } = await sb.rpc('create_initial_state', { p_state, p_round_ends_at });
+  if (won) {
+    currentVersion = 1;
+    roundEndsAt    = new Date(p_round_ends_at);
+    render();
+    startTimer();
+  } else {
+    // Another client won the INSERT race — read their row
+    const { data: winner } = await sb.from('game_state').select('*').eq('id', 1).single();
+    if (winner) hydrate(winner);
+    else { console.error('[createInitialState] fallback read failed', error); }
+  }
+}
+
+// ============================================================
 // HALL OF FAME
 // ============================================================
 
 async function addToHallOfFame(p, floor, epitaph) {
   try {
-    console.log('[HoF] sb client:', sb);
     const newEntry = {
       name:    p.name,
       floor,
@@ -662,13 +766,11 @@ async function addToHallOfFame(p, floor, epitaph) {
       def:     p.def,
       epitaph,
     };
-    console.log('[HoF] inserting:', newEntry);
     const { data: inserted, error: insertErr } = await sb
       .from('hall_of_fame')
       .insert(newEntry)
       .select('id')
       .single();
-    console.log('[HoF] insert result — data:', inserted, 'error:', insertErr);
     if (insertErr) throw insertErr;
 
     const { data: rows, error: fetchErr } = await sb
@@ -677,11 +779,9 @@ async function addToHallOfFame(p, floor, epitaph) {
       .order('floor', { ascending: false })
       .order('kills', { ascending: false })
       .limit(HOF_MAX);
-    console.log('[HoF] fetch result — rows:', rows, 'error:', fetchErr);
     if (fetchErr) throw fetchErr;
 
     const currentIdx = rows.findIndex(r => r.id === inserted.id);
-    console.log('[HoF] currentIdx:', currentIdx);
     return { entries: rows, currentIdx };
   } catch (err) {
     console.error('[HoF] FAILED:', err);
@@ -766,10 +866,13 @@ function updateDeathCountdownUI() {
   if (el) el.textContent = deathTimeLeft;
 }
 
-function restart() {
+async function restart() {
   stopDeathCountdown();
   document.getElementById('death-overlay').style.display = 'none';
   stopTimer();
+
+  const lockedVersion = currentVersion;
+
   floorNum   = 1;
   messages   = [];
   gameActive = true;
@@ -778,8 +881,21 @@ function restart() {
   player     = makePlayer();
   newFloor();
   addMsg(`${player.name} enters the dungeon. A new run begins!`);
+
+  const newState       = serializeState();
+  const newRoundEndsAt = new Date(Date.now() + ROUND_DURATION * 1000).toISOString();
+
+  const { data: committed, error } = await sb.rpc('try_commit_round', {
+    p_version: lockedVersion, p_new_state: newState, p_new_round_ends_at: newRoundEndsAt,
+  });
   render();
-  startTimer();
+  if (error) { console.error('[restart]', error); return; }
+  if (committed) {
+    currentVersion++;
+    roundEndsAt = new Date(newRoundEndsAt);
+    startTimer();
+  }
+  // If !committed: Realtime delivers winner's new run via hydrate()
 }
 
 // ============================================================
