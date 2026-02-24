@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Community Crawler</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>Community Crawler</h1>
+
+  <div id="game-layout">
+    <div id="canvas-container"></div>
+
+    <div id="right-panel">
+      <div class="panel" id="status-panel">
+        <h3>Adventurer</h3>
+        <div id="ui-name">—</div>
+        <div id="ui-hp" class="hp-high">HP: — / —</div>
+        <div class="stat-row">
+          <span id="ui-atk">ATK: —</span>
+          <span id="ui-def">DEF: —</span>
+          <span id="ui-pot">Potions: 0</span>
+        </div>
+        <div id="ui-floor">Floor 1</div>
+        <div id="ui-kills">Kills: 0</div>
+        <div id="ui-viewers">Viewers: —</div>
+      </div>
+
+      <div class="panel" id="message-panel">
+        <h3>Log</h3>
+        <div id="message-list"></div>
+      </div>
+
+      <div class="panel collapsible collapsed" id="codex-panel">
+        <h3 class="panel-toggle">Codex <span class="toggle-icon">&#9662;</span></h3>
+        <div class="panel-body">
+          <div id="codex-list"></div>
+        </div>
+      </div>
+
+      <div class="panel" id="vote-panel">
+        <h3>Vote</h3>
+        <div id="vote-buttons"></div>
+        <div id="vote-timer">
+          <div id="timer-bar-track">
+            <div id="timer-bar-fill"></div>
+          </div>
+          <div id="timer-text">Next action in <span id="timer-value">10</span>s</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="death-overlay">
+    <div id="death-screen">
+      <h2>Adventurer Has Fallen</h2>
+
+      <div id="death-hero">
+        <div id="death-name"></div>
+        <div id="death-run-stats"></div>
+        <div id="death-epitaph"></div>
+      </div>
+
+      <div id="death-hof">
+        <h3>Hall of Fame</h3>
+        <table id="hof-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Name</th>
+              <th>Floor</th>
+              <th>Kills</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody id="hof-body"></tbody>
+        </table>
+      </div>
+
+      <div id="death-footer">
+        <div id="restart-countdown">New run in <span id="countdown-value">15</span>s</div>
+        <button id="restart-btn">Begin New Run</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/rot-js/dist/rot.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>
