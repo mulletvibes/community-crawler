@@ -357,6 +357,7 @@ function enemyAttacks(enemy) {
 
 function onKey(e) {
   if (!gameActive) return;
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
   if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
     e.preventDefault();
