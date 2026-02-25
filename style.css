@@ -52,21 +52,18 @@ body {
 /* ── Game layout ──────────────────────────────────────────── */
 
 #game-layout {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  width: 100%;
-  max-width: 1280px;
-}
-
-#game-top {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 200px 260px;
+  grid-template-rows: 1fr 1fr;
+  grid-template-areas:
+    "canvas  status  chat"
+    "canvas  vote    log";
   gap: 14px;
-  align-items: flex-start;
+  height: 480px;
 }
 
 #canvas-col {
-  flex-shrink: 0;
+  grid-area: canvas;
 }
 
 #canvas-container canvas {
@@ -74,28 +71,26 @@ body {
   border: 1px solid var(--border);
 }
 
-#control-col {
-  width: 260px;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+#status-panel {
+  grid-area: status;
 }
 
-#game-bottom {
+#vote-panel {
+  grid-area: vote;
   display: flex;
-  gap: 10px;
-  align-items: flex-start;
+  flex-direction: column;
 }
 
 #message-panel {
-  flex: 1;
-  min-width: 0;
+  grid-area: log;
+  display: flex;
+  flex-direction: column;
 }
 
 #chat-panel {
-  flex: 1;
-  min-width: 0;
+  grid-area: chat;
+  display: flex;
+  flex-direction: column;
 }
 
 /* ── Shared panel ─────────────────────────────────────────── */
@@ -156,7 +151,8 @@ body {
   font-size: 0.76rem;
   line-height: 1.6;
   color: var(--text);
-  max-height: 160px;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
 }
 
@@ -175,7 +171,10 @@ body {
   display: flex;
   flex-direction: column;
   gap: 3px;
-  margin-bottom: 10px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  margin-bottom: 8px;
 }
 
 .vote-btn {
@@ -292,7 +291,8 @@ body {
 }
 
 #chat-messages {
-  height: 110px;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
@@ -490,7 +490,7 @@ body {
   color: #fff;
 }
 
-/* ── Mobile layout ────────────────────────────────────────── */
+/* ── Responsive layout ────────────────────────────────────── */
 
 @media (max-width: 1280px) {
   body {
@@ -502,25 +502,21 @@ body {
   #ascii-header  { display: none; }
   #mobile-title  { display: block; text-align: center; }
 
+  /* Canvas scales down; columns keep proportions */
   #game-layout {
+    grid-template-columns: 1fr 200px 260px;
+    grid-template-rows: auto auto;
+    height: auto;
     gap: 8px;
   }
 
-  /* Canvas scales to fill available space beside control col */
   #canvas-col {
-    flex: 1;
-    min-width: 0;
     overflow: hidden;
   }
 
   #canvas-col canvas {
     width: 100% !important;
     height: auto !important;
-  }
-
-  /* Narrower control column on tablet/mobile */
-  #control-col {
-    width: 180px;
   }
 
   /* Vote buttons: bigger tap targets */
@@ -533,8 +529,23 @@ body {
     display: none;
   }
 
+  /* Panels no longer constrained to half of 480px */
+  #vote-panel,
+  #message-panel,
+  #chat-panel {
+    min-height: 160px;
+  }
+
+  #vote-buttons {
+    max-height: 200px;
+  }
+
   #message-list {
-    max-height: 120px;
+    max-height: 140px;
+  }
+
+  #chat-messages {
+    min-height: 80px;
   }
 }
 
@@ -543,22 +554,31 @@ body {
     padding: 10px 8px 30px;
   }
 
-  /* Single full-width column: map → stats → vote → log → chat */
-  #game-top {
-    flex-direction: column;
+  /* map full-width, three-panel row, chat full-width */
+  #game-layout {
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: auto 160px auto;
+    grid-template-areas:
+      "canvas  canvas  canvas"
+      "status  log     vote"
+      "chat    chat    chat";
+    height: auto;
+    gap: 8px;
   }
 
-  #canvas-col {
+  /* Reset tablet overrides */
+  #vote-buttons {
+    max-height: none;
+  }
+
+  #message-list {
+    max-height: none;
+  }
+
+  #chat-messages {
+    min-height: 0;
+    height: 90px;
     flex: none;
-    width: 100%;
-  }
-
-  #control-col {
-    width: 100%;
-  }
-
-  #game-bottom {
-    flex-direction: column;
   }
 
   #death-screen {
