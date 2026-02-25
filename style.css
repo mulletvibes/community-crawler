@@ -24,7 +24,22 @@ body {
   padding: 20px 20px 40px;
 }
 
-h1 {
+/* ── ASCII header ─────────────────────────────────────────── */
+
+#ascii-header {
+  color: var(--gold);
+  font-size: 0.72rem;
+  line-height: 1.18;
+  letter-spacing: 0;
+  text-align: left;
+  white-space: pre;
+  margin-bottom: 18px;
+  overflow: hidden;
+  user-select: none;
+}
+
+#mobile-title {
+  display: none;
   color: var(--gold);
   letter-spacing: 0.25em;
   margin-bottom: 16px;
@@ -32,16 +47,24 @@ h1 {
   text-transform: uppercase;
 }
 
+/* ── Game layout ──────────────────────────────────────────── */
+
 #game-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 1280px;
+}
+
+#game-top {
   display: flex;
   gap: 14px;
   align-items: flex-start;
 }
 
-#left-col {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+#canvas-col {
+  flex-shrink: 0;
 }
 
 #canvas-container canvas {
@@ -49,12 +72,36 @@ h1 {
   border: 1px solid var(--border);
 }
 
-#right-panel {
+#control-col {
   width: 260px;
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
+
+#game-bottom {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+#message-panel {
+  flex: 1.5;
+  min-width: 0;
+}
+
+#codex-panel {
+  width: 220px;
+  flex-shrink: 0;
+}
+
+#chat-panel {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── Shared panel ─────────────────────────────────────────── */
 
 .panel {
   background: var(--bg2);
@@ -71,6 +118,8 @@ h1 {
   border-bottom: 1px solid var(--border);
   padding-bottom: 6px;
 }
+
+/* ── Status panel ─────────────────────────────────────────── */
 
 #ui-name {
   font-size: 1rem;
@@ -104,11 +153,13 @@ h1 {
   margin-top: 3px;
 }
 
+/* ── Log panel ────────────────────────────────────────────── */
+
 #message-list {
   font-size: 0.76rem;
   line-height: 1.6;
   color: var(--text);
-  max-height: 180px;
+  max-height: 160px;
   overflow-y: auto;
 }
 
@@ -121,14 +172,13 @@ h1 {
   color: #e0e0e0;
 }
 
-/* Collapsible panels */
+/* ── Collapsible panels ───────────────────────────────────── */
+
 .panel.collapsible .panel-toggle {
   cursor: pointer;
   user-select: none;
   display: flex;
   align-items: center;
-  /* Remove the h3 separator — it lives on panel-body instead,
-     so padding is always symmetric and the chevron stays centred */
   margin-bottom: 0;
   padding-bottom: 0;
   border-bottom: none;
@@ -159,6 +209,7 @@ h1 {
   display: flex;
   flex-direction: column;
   gap: 5px;
+  padding-top: 6px;
 }
 
 .codex-entry {
@@ -191,7 +242,8 @@ h1 {
   font-size: 0.72rem;
 }
 
-/* Vote panel */
+/* ── Vote panel ───────────────────────────────────────────── */
+
 #vote-buttons {
   display: flex;
   flex-direction: column;
@@ -280,147 +332,7 @@ h1 {
   color: #aaa;
 }
 
-/* Death overlay */
-#death-overlay {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.9);
-  z-index: 10;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-
-#death-screen {
-  background: var(--bg2);
-  border: 1px solid #444;
-  padding: 32px 40px;
-  text-align: center;
-  width: 560px;
-  max-width: 100%;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
-#death-screen h2 {
-  color: #c44;
-  font-size: 1.2rem;
-  margin-bottom: 20px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-/* Death hero block */
-#death-hero {
-  margin-bottom: 24px;
-}
-
-#death-name {
-  font-size: 1.15rem;
-  color: #fff;
-  margin-bottom: 6px;
-}
-
-#death-run-stats {
-  font-size: 0.8rem;
-  color: #777;
-  margin-bottom: 10px;
-  letter-spacing: 0.03em;
-}
-
-#death-epitaph {
-  font-size: 0.85rem;
-  color: #999;
-  font-style: italic;
-  line-height: 1.55;
-}
-
-/* Hall of Fame */
-#death-hof {
-  border-top: 1px solid var(--border);
-  padding-top: 20px;
-  margin-bottom: 20px;
-  text-align: left;
-}
-
-#death-hof h3 {
-  color: var(--gold);
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.15em;
-  margin-bottom: 12px;
-  text-align: center;
-}
-
-#hof-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.78rem;
-}
-
-#hof-table th {
-  color: var(--dim);
-  font-size: 0.66rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  padding: 4px 8px;
-  border-bottom: 1px solid var(--border);
-  text-align: left;
-}
-
-#hof-table td {
-  padding: 5px 8px;
-  color: #777;
-  border-bottom: 1px solid #1a1a1a;
-}
-
-#hof-table tr.hof-current td {
-  color: var(--gold);
-}
-
-#hof-table tr:last-child td {
-  border-bottom: none;
-}
-
-/* Death footer */
-#death-footer {
-  border-top: 1px solid var(--border);
-  padding-top: 18px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-}
-
-#restart-countdown {
-  font-size: 0.78rem;
-  color: var(--dim);
-}
-
-#countdown-value {
-  color: #aaa;
-}
-
-#restart-btn {
-  padding: 9px 28px;
-  background: none;
-  border: 1px solid #666;
-  color: #ccc;
-  font-family: inherit;
-  font-size: 0.82rem;
-  cursor: pointer;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-#restart-btn:hover {
-  background: #2a2a2a;
-  border-color: #aaa;
-  color: #fff;
-}
-
-/* ── Chat panel ─────────────────────────────────────────────── */
+/* ── Chat panel ───────────────────────────────────────────── */
 
 #chat-name-row {
   display: flex;
@@ -511,4 +423,214 @@ h1 {
   background: #1a1a1a;
   border-color: #888;
   color: #ccc;
+}
+
+/* ── Death overlay ────────────────────────────────────────── */
+
+#death-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.9);
+  z-index: 10;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+#death-screen {
+  background: var(--bg2);
+  border: 1px solid #444;
+  padding: 32px 40px;
+  text-align: center;
+  width: 560px;
+  max-width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+#death-screen h2 {
+  color: #c44;
+  font-size: 1.2rem;
+  margin-bottom: 20px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+#death-hero {
+  margin-bottom: 24px;
+}
+
+#death-name {
+  font-size: 1.15rem;
+  color: #fff;
+  margin-bottom: 6px;
+}
+
+#death-run-stats {
+  font-size: 0.8rem;
+  color: #777;
+  margin-bottom: 10px;
+  letter-spacing: 0.03em;
+}
+
+#death-epitaph {
+  font-size: 0.85rem;
+  color: #999;
+  font-style: italic;
+  line-height: 1.55;
+}
+
+#death-hof {
+  border-top: 1px solid var(--border);
+  padding-top: 20px;
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+#death-hof h3 {
+  color: var(--gold);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+#hof-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+}
+
+#hof-table th {
+  color: var(--dim);
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+
+#hof-table td {
+  padding: 5px 8px;
+  color: #777;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+#hof-table tr.hof-current td {
+  color: var(--gold);
+}
+
+#hof-table tr:last-child td {
+  border-bottom: none;
+}
+
+#death-footer {
+  border-top: 1px solid var(--border);
+  padding-top: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+#restart-countdown {
+  font-size: 0.78rem;
+  color: var(--dim);
+}
+
+#countdown-value {
+  color: #aaa;
+}
+
+#restart-btn {
+  padding: 9px 28px;
+  background: none;
+  border: 1px solid #666;
+  color: #ccc;
+  font-family: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+#restart-btn:hover {
+  background: #2a2a2a;
+  border-color: #aaa;
+  color: #fff;
+}
+
+/* ── Mobile layout ────────────────────────────────────────── */
+
+@media (max-width: 900px) {
+  body {
+    padding: 12px 10px 30px;
+    align-items: stretch;
+  }
+
+  /* Hide big ASCII art, show plain title */
+  #ascii-header  { display: none; }
+  #mobile-title  { display: block; text-align: center; }
+
+  #game-layout {
+    gap: 8px;
+  }
+
+  /* Canvas scales to fill available space beside control col */
+  #canvas-col {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  #canvas-col canvas {
+    width: 100% !important;
+    height: auto !important;
+  }
+
+  /* Narrower control column on mobile */
+  #control-col {
+    width: 150px;
+  }
+
+  /* Vote buttons: bigger tap targets */
+  .vote-btn {
+    padding: 8px 6px;
+    font-size: 0.72rem;
+  }
+
+  .vote-key {
+    display: none;
+  }
+
+  /* Bottom section stacks vertically */
+  #game-bottom {
+    flex-direction: column;
+  }
+
+  #codex-panel {
+    width: auto;
+  }
+
+  #message-list {
+    max-height: 120px;
+  }
+}
+
+@media (max-width: 480px) {
+  #control-col {
+    width: 130px;
+  }
+
+  .vote-btn {
+    font-size: 0.68rem;
+    padding: 7px 5px;
+  }
+
+  #death-screen {
+    padding: 20px 16px;
+  }
 }

@@ -7,40 +7,61 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>Community Crawler</h1>
+
+  <pre id="ascii-header" aria-label="Community Crawler">
+ ██████╗ ██████╗ ███╗   ███╗███╗   ███╗██╗   ██╗███╗   ██╗██╗████████╗██╗   ██╗
+██╔════╝██╔═══██╗████╗ ████║████╗ ████║██║   ██║████╗  ██║██║╚══██╔══╝╚██╗ ██╔╝
+██║     ██║   ██║██╔████╔██║██╔████╔██║██║   ██║██╔██╗ ██║██║   ██║    ╚████╔╝
+██║     ██║   ██║██║╚██╔╝██║██║╚██╔╝██║██║   ██║██║╚██╗██║██║   ██║     ╚██╔╝
+╚██████╗╚██████╔╝██║ ╚═╝ ██║██║ ╚═╝ ██║╚██████╔╝██║ ╚████║██║   ██║      ██║
+ ╚═════╝ ╚═════╝ ╚═╝     ╚═╝╚═╝     ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚═╝   ╚═╝      ╚═╝
+ ██████╗██████╗  █████╗ ██╗    ██╗██╗     ███████╗██████╗
+██╔════╝██╔══██╗██╔══██╗██║    ██║██║     ██╔════╝██╔══██╗
+██║     ██████╔╝███████║██║ █╗ ██║██║     █████╗  ██████╔╝
+██║     ██╔══██╗██╔══██║██║███╗██║██║     ██╔══╝  ██╔══██╗
+╚██████╗██║  ██║██║  ██║╚███╔███╔╝███████╗███████╗██║  ██║
+ ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝ ╚══╝╚══╝ ╚══════╝╚══════╝╚═╝  ╚═╝</pre>
+
+  <h1 id="mobile-title">Community Crawler</h1>
 
   <div id="game-layout">
-    <div id="left-col">
-      <div id="canvas-container"></div>
 
-      <div class="panel" id="chat-panel">
-        <h3>Chat</h3>
-        <div id="chat-name-row">
-          <label for="chat-name-input" class="chat-name-label">Name</label>
-          <input id="chat-name-input" type="text" placeholder="Anon" maxlength="20" autocomplete="off" spellcheck="false">
+    <div id="game-top">
+
+      <div id="canvas-col">
+        <div id="canvas-container"></div>
+      </div>
+
+      <div id="control-col">
+        <div class="panel" id="status-panel">
+          <h3>Adventurer</h3>
+          <div id="ui-name">—</div>
+          <div id="ui-hp" class="hp-high">HP: — / —</div>
+          <div class="stat-row">
+            <span id="ui-atk">ATK: —</span>
+            <span id="ui-def">DEF: —</span>
+            <span id="ui-pot">Potions: 0</span>
+          </div>
+          <div id="ui-floor">Floor 1</div>
+          <div id="ui-kills">Kills: 0</div>
+          <div id="ui-viewers">Viewers: —</div>
         </div>
-        <div id="chat-messages"></div>
-        <div id="chat-input-row">
-          <input id="chat-input" type="text" placeholder="Say something…" maxlength="120" autocomplete="off" spellcheck="false">
-          <button id="chat-send">Send</button>
+
+        <div class="panel" id="vote-panel">
+          <h3>Vote</h3>
+          <div id="vote-buttons"></div>
+          <div id="vote-timer">
+            <div id="timer-bar-track">
+              <div id="timer-bar-fill"></div>
+            </div>
+            <div id="timer-text">Next action in <span id="timer-value">10</span>s</div>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div id="right-panel">
-      <div class="panel" id="status-panel">
-        <h3>Adventurer</h3>
-        <div id="ui-name">—</div>
-        <div id="ui-hp" class="hp-high">HP: — / —</div>
-        <div class="stat-row">
-          <span id="ui-atk">ATK: —</span>
-          <span id="ui-def">DEF: —</span>
-          <span id="ui-pot">Potions: 0</span>
-        </div>
-        <div id="ui-floor">Floor 1</div>
-        <div id="ui-kills">Kills: 0</div>
-        <div id="ui-viewers">Viewers: —</div>
-      </div>
+    </div><!-- /#game-top -->
+
+    <div id="game-bottom">
 
       <div class="panel" id="message-panel">
         <h3>Log</h3>
@@ -54,18 +75,22 @@
         </div>
       </div>
 
-      <div class="panel" id="vote-panel">
-        <h3>Vote</h3>
-        <div id="vote-buttons"></div>
-        <div id="vote-timer">
-          <div id="timer-bar-track">
-            <div id="timer-bar-fill"></div>
-          </div>
-          <div id="timer-text">Next action in <span id="timer-value">10</span>s</div>
+      <div class="panel" id="chat-panel">
+        <h3>Chat</h3>
+        <div id="chat-name-row">
+          <label for="chat-name-input" class="chat-name-label">Name</label>
+          <input id="chat-name-input" type="text" placeholder="Anon" maxlength="20" autocomplete="off" spellcheck="false">
+        </div>
+        <div id="chat-messages"></div>
+        <div id="chat-input-row">
+          <input id="chat-input" type="text" placeholder="Say something…" maxlength="120" autocomplete="off" spellcheck="false">
+          <button id="chat-send">Send</button>
         </div>
       </div>
-    </div>
-  </div>
+
+    </div><!-- /#game-bottom -->
+
+  </div><!-- /#game-layout -->
 
   <div id="death-overlay">
     <div id="death-screen">
