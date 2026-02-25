@@ -8,7 +8,7 @@ const MAP_W          = 60;
 const MAP_H          = 30;
 const MAX_ENEMIES    = 8;
 const MAX_ITEMS      = 5;
-const MAX_MESSAGES   = 8;
+const MAX_MESSAGES   = 20;
 const SIGHT_RANGE    = 12;
 const MIN_SPAWN_DIST = 8;
 const ROUND_DURATION = 10;
@@ -26,18 +26,27 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // ============================================================
 
 const FIRST_NAMES = [
-  'Aldric', 'Bram',  'Cael',  'Dwyn',  'Eryn',  'Faen',
-  'Gorn',   'Hael',  'Idris', 'Jorn',  'Kael',  'Lyra',
-  'Maren',  'Nyx',   'Orin',  'Petra', 'Rael',  'Syla',
-  'Thane',  'Vael',  'Wren',  'Zorn',  'Aela',  'Cress',
+  'Aldric', 'Bram',   'Cael',   'Dwyn',   'Eryn',   'Faen',
+  'Gorn',   'Hael',   'Idris',  'Jorn',   'Kael',   'Lyra',
+  'Maren',  'Nyx',    'Orin',   'Petra',  'Rael',   'Syla',
+  'Thane',  'Vael',   'Wren',   'Zorn',   'Aela',   'Cress',
+  'Arin',   'Bael',   'Cira',   'Dren',   'Elowen', 'Fyren',
+  'Gareth', 'Hira',   'Isen',   'Jorin',  'Kyra',   'Lorn',
+  'Myra',   'Nael',   'Owyn',   'Pryn',   'Rylen',  'Sorn',
+  'Tira',   'Uren',   'Vara',   'Wynne',  'Xael',   'Yowen',
 ];
 
 const LAST_NAMES = [
-  'Ashford',    'Blackmoor',  'Coldwater',  'Duskmantle',
-  'Embervale',  'Frostholm',  'Greystone',  'Hawkwind',
-  'Ironwood',   'Losthaven',  'Moonwhisper','Nighthollow',
-  'Oakenshield','Ravenmark',  'Silverstream','Thornwall',
-  'Voidwalker', 'Wilderpath', 'Yewbarrow',  'Zephyrhold',
+  'Ashford',     'Blackmoor',   'Coldwater',   'Duskmantle',
+  'Embervale',   'Frostholm',   'Greystone',   'Hawkwind',
+  'Ironwood',    'Losthaven',   'Moonwhisper', 'Nighthollow',
+  'Oakenshield', 'Ravenmark',   'Silverstream','Thornwall',
+  'Voidwalker',  'Wilderpath',  'Yewbarrow',   'Zephyrhold',
+  'Amberveil',   'Brightwater', 'Cryptholm',   'Dawnridge',
+  'Edgecliff',   'Flintmoor',   'Grimhold',    'Hollowgate',
+  'Icemantle',   'Jadestone',   'Knightfall',  'Lowmarch',
+  'Mistwatch',   'Northveil',   'Oldbrook',    'Pinewood',
+  'Quicksilver', 'Rustwood',    'Shadowfen',   'Tarrock',
 ];
 
 // minFloor: first floor on which this enemy can appear
@@ -82,10 +91,13 @@ const KEY_TO_ACTION = {
 let display, map, player, enemies, items, stairs, messages,
     floorNum, gameActive, rooms,
     votes, timeLeft, timerInterval,
-    deathTimer, deathTimeLeft;
+    deathTimer, deathTimeLeft, deathShowing;
 
 // Supabase sync metadata
 let currentVersion, roundEndsAt, realtimeChannel, isExecutingRound;
+
+// Name repetition tracking
+let usedNames = [];
 
 // Chat & presence
 let displayName, presenceChannel;
@@ -144,14 +156,22 @@ async function init() {
 
 function makePlayer() {
   const maxHp = rand(20, 35);
+  let name;
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const candidate = `${pick(FIRST_NAMES)} ${pick(LAST_NAMES)}`;
+    if (!usedNames.includes(candidate)) { name = candidate; break; }
+  }
+  if (!name) name = `${pick(FIRST_NAMES)} ${pick(LAST_NAMES)}`;
+  usedNames.push(name);
+  if (usedNames.length > 30) usedNames.shift();
   return {
     x: 0, y: 0,
     hp: maxHp, maxHp,
-    atk:      rand(3, 8),
-    def:      rand(1, 5),
-    name:     `${pick(FIRST_NAMES)} ${pick(LAST_NAMES)}`,
-    potions:  0,
-    kills:    0,
+    atk:     rand(3, 8),
+    def:     rand(1, 5),
+    name,
+    potions: 0,
+    kills:   0,
     killedBy: null,
   };
 }
@@ -637,11 +657,13 @@ function serializeState() {
     messages:   [...messages],
     floorNum,
     gameActive,
+    usedNames:  [...usedNames],
   };
 }
 
 function hydrate(row) {
   const s = row.state;
+  const isNewRound = currentVersion === undefined || row.version > currentVersion;
   currentVersion = row.version;
   roundEndsAt    = new Date(row.round_ends_at);
   map        = s.map;
@@ -649,9 +671,16 @@ function hydrate(row) {
   enemies    = s.enemies;
   items      = s.items;
   stairs     = s.stairs;
-  messages   = s.messages;
   floorNum   = s.floorNum;
   gameActive = s.gameActive;
+  usedNames  = s.usedNames || usedNames;
+
+  // Only update the message log when a new round commits (not on every vote sync).
+  // On version advance, append the round's events to the local log.
+  if (isNewRound) {
+    messages = (messages || []).concat(s.messages).slice(-MAX_MESSAGES);
+  }
+
   votes = initVotes();
   if (row.votes) {
     for (const key of Object.keys(votes)) votes[key] = row.votes[key] || 0;
@@ -664,8 +693,7 @@ function hydrate(row) {
   updateTimerUI();
   render();
   if (!gameActive) {
-    const overlay = document.getElementById('death-overlay');
-    if (overlay.style.display !== 'flex') setTimeout(showDeath, 200);
+    setTimeout(showDeath, 200);
     return;
   }
   document.getElementById('death-overlay').style.display = 'none';
@@ -689,6 +717,7 @@ function subscribeRealtime() {
 async function createInitialState() {
   floorNum   = 1;
   messages   = [];
+  usedNames  = [];
   gameActive = true;
   votes      = initVotes();
   player     = makePlayer();
@@ -776,6 +805,8 @@ function generateEpitaph(p, floor) {
 // ============================================================
 
 async function showDeath() {
+  if (deathShowing) return;
+  deathShowing = true;
   const epitaph = generateEpitaph(player, floorNum);
   const { entries, currentIdx } = await addToHallOfFame(player, floorNum, epitaph);
 
@@ -802,6 +833,7 @@ async function showDeath() {
 }
 
 function startDeathCountdown() {
+  stopDeathCountdown();
   deathTimeLeft = DEATH_DELAY;
   updateDeathCountdownUI();
   deathTimer = setInterval(() => {
@@ -827,6 +859,7 @@ function updateDeathCountdownUI() {
 }
 
 async function restart() {
+  deathShowing = false;
   stopDeathCountdown();
   document.getElementById('death-overlay').style.display = 'none';
   stopTimer();
