@@ -31,11 +31,13 @@ body {
   font-size: 0.72rem;
   line-height: 1.18;
   letter-spacing: 0;
-  text-align: left;
+  text-align: center;
   white-space: pre;
   margin-bottom: 18px;
   overflow: hidden;
   user-select: none;
+  width: 100%;
+  max-width: 1280px;
 }
 
 #mobile-title {
@@ -565,7 +567,7 @@ body {
 
 /* ── Mobile layout ────────────────────────────────────────── */
 
-@media (max-width: 900px) {
+@media (max-width: 1280px) {
   body {
     padding: 12px 10px 30px;
     align-items: stretch;
@@ -591,9 +593,9 @@ body {
     height: auto !important;
   }
 
-  /* Narrower control column on mobile */
+  /* Narrower control column on tablet/mobile */
   #control-col {
-    width: 150px;
+    width: 180px;
   }
 
   /* Vote buttons: bigger tap targets */
