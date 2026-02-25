@@ -53,22 +53,24 @@ body {
 
 #game-layout {
   display: grid;
-  grid-template-columns: auto 200px 260px;
-  grid-template-rows: 1fr 1fr;
+  grid-template-columns: 280px 1fr 300px;
+  grid-template-rows: auto 1fr;
   grid-template-areas:
-    "canvas  status  chat"
-    "canvas  vote    log";
-  gap: 14px;
-  height: 480px;
+    "status  canvas  log"
+    "vote    canvas  chat";
+  gap: 16px;
 }
 
 #canvas-col {
   grid-area: canvas;
+  overflow: hidden;
 }
 
 #canvas-container canvas {
   display: block;
   border: 1px solid var(--border);
+  width: 100%;
+  height: auto;
 }
 
 #status-panel {
@@ -151,8 +153,7 @@ body {
   font-size: 0.76rem;
   line-height: 1.6;
   color: var(--text);
-  flex: 1;
-  min-height: 0;
+  max-height: 260px;
   overflow-y: auto;
 }
 
@@ -502,23 +503,6 @@ body {
   #ascii-header  { display: none; }
   #mobile-title  { display: block; text-align: center; }
 
-  /* Canvas scales down; columns keep proportions */
-  #game-layout {
-    grid-template-columns: 1fr 200px 260px;
-    grid-template-rows: auto auto;
-    height: auto;
-    gap: 8px;
-  }
-
-  #canvas-col {
-    overflow: hidden;
-  }
-
-  #canvas-col canvas {
-    width: 100% !important;
-    height: auto !important;
-  }
-
   /* Vote buttons: bigger tap targets */
   .vote-btn {
     padding: 8px 6px;
@@ -528,25 +512,6 @@ body {
   .vote-key {
     display: none;
   }
-
-  /* Panels no longer constrained to half of 480px */
-  #vote-panel,
-  #message-panel,
-  #chat-panel {
-    min-height: 160px;
-  }
-
-  #vote-buttons {
-    max-height: 200px;
-  }
-
-  #message-list {
-    max-height: 140px;
-  }
-
-  #chat-messages {
-    min-height: 80px;
-  }
 }
 
 @media (max-width: 768px) {
@@ -554,31 +519,25 @@ body {
     padding: 10px 8px 30px;
   }
 
-  /* map full-width, three-panel row, chat full-width */
+  /* Single column: map → status → vote → log → chat */
   #game-layout {
-    grid-template-columns: 1fr 1fr 1fr;
-    grid-template-rows: auto 160px auto;
+    grid-template-columns: 1fr;
     grid-template-areas:
-      "canvas  canvas  canvas"
-      "status  log     vote"
-      "chat    chat    chat";
-    height: auto;
+      "canvas"
+      "status"
+      "vote"
+      "log"
+      "chat";
     gap: 8px;
   }
 
-  /* Reset tablet overrides */
-  #vote-buttons {
-    max-height: none;
-  }
-
   #message-list {
-    max-height: none;
+    max-height: 200px;
   }
 
   #chat-messages {
-    min-height: 0;
-    height: 90px;
     flex: none;
+    height: 120px;
   }
 
   #death-screen {
