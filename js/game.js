@@ -47,18 +47,6 @@ const ENEMY_DEFS = [
   { char: 'T', name: 'Troll',  color: '#a44', hp: [15, 22], atk: [5, 8], def: [2, 3], minFloor: 4 },
 ];
 
-const CODEX = {
-  '@': { name: 'Adventurer',    color: '#fff', desc: "That's you." },
-  '>': { name: 'Stairs',        color: '#dd0', desc: 'Vote Go Down Stairs to descend.' },
-  '!': { name: 'Health Potion', color: '#e55', desc: 'Vote Pick Up Item, then Use Potion.' },
-  ')': { name: 'Weapon',        color: '#fa0', desc: 'Vote Pick Up Item to raise ATK.' },
-  'G': { name: 'Goblin',        color: '#4a4', desc: 'Fast and weak. Common from floor 1.' },
-  'O': { name: 'Orc',           color: '#8a4', desc: 'Tougher fighter. Appears on floor 3.' },
-  'T': { name: 'Troll',         color: '#a44', desc: 'Dangerous brute. Appears on floor 4.' },
-};
-
-const CODEX_ORDER = ['@', '>', '!', ')', 'G', 'O', 'T'];
-
 // ============================================================
 // ACTIONS
 // ============================================================
@@ -92,7 +80,7 @@ const KEY_TO_ACTION = {
 // ============================================================
 
 let display, map, player, enemies, items, stairs, messages,
-    floorNum, gameActive, rooms, discovered,
+    floorNum, gameActive, rooms,
     votes, timeLeft, timerInterval,
     deathTimer, deathTimeLeft;
 
@@ -133,7 +121,6 @@ async function init() {
   document.getElementById('canvas-container').appendChild(display.getContainer());
 
   initVoteUI();
-  initCollapsibles();
   initChat();
 
   const { data, error } = await sb.from('game_state').select('*').eq('id', 1).single();
@@ -202,7 +189,6 @@ function newFloor() {
 
   placeEnemies();
   placeItems();
-  revealSymbols();
 }
 
 function placeEnemies() {
@@ -259,41 +245,6 @@ function freeSpot(room, from = null, minDist = 0) {
     return { x, y };
   }
   return null;
-}
-
-// ============================================================
-// CODEX
-// ============================================================
-
-function revealSymbols() {
-  let changed = false;
-  const toCheck = ['@', '>'];
-  for (const e of enemies) toCheck.push(e.char);
-  for (const i of items)   toCheck.push(i.char);
-  for (const sym of toCheck) {
-    if (CODEX[sym] && !discovered.has(sym)) {
-      discovered.add(sym);
-      changed = true;
-    }
-  }
-  if (changed) updateCodex();
-}
-
-function updateCodex() {
-  const el = document.getElementById('codex-list');
-  if (!el) return;
-  el.innerHTML = CODEX_ORDER
-    .filter(sym => discovered.has(sym))
-    .map(sym => {
-      const c = CODEX[sym];
-      return `<div class="codex-entry">` +
-        `<span class="codex-char" style="color:${c.color}">${sym}</span>` +
-        `<span class="codex-info">` +
-        `<span class="codex-name">${c.name}</span>` +
-        `<span class="codex-desc">${c.desc}</span>` +
-        `</span></div>`;
-    })
-    .join('');
 }
 
 // ============================================================
@@ -684,7 +635,6 @@ function serializeState() {
     items:      items.map(i => ({ ...i })),
     stairs:     stairs ? { ...stairs } : null,
     messages:   [...messages],
-    discovered: [...discovered],
     floorNum,
     gameActive,
   };
@@ -702,7 +652,6 @@ function hydrate(row) {
   messages   = s.messages;
   floorNum   = s.floorNum;
   gameActive = s.gameActive;
-  discovered = new Set(s.discovered || []);
   votes = initVotes();
   if (row.votes) {
     for (const key of Object.keys(votes)) votes[key] = row.votes[key] || 0;
@@ -713,7 +662,6 @@ function hydrate(row) {
   timeLeft = Math.max(0, Math.ceil(msRemaining / 1000));
   updateVoteUI();
   updateTimerUI();
-  updateCodex();
   render();
   if (!gameActive) {
     const overlay = document.getElementById('death-overlay');
@@ -742,7 +690,6 @@ async function createInitialState() {
   floorNum   = 1;
   messages   = [];
   gameActive = true;
-  discovered = new Set();
   votes      = initVotes();
   player     = makePlayer();
   newFloor();
@@ -889,7 +836,6 @@ async function restart() {
   floorNum   = 1;
   messages   = [];
   gameActive = true;
-  discovered = new Set();
   votes      = initVotes();
   player     = makePlayer();
   newFloor();
@@ -1020,18 +966,6 @@ function initPresence() {
         await presenceChannel.track({ joined_at: new Date().toISOString() });
       }
     });
-}
-
-// ============================================================
-// COLLAPSIBLE PANELS
-// ============================================================
-
-function initCollapsibles() {
-  document.querySelectorAll('.panel.collapsible .panel-toggle').forEach(h3 => {
-    h3.addEventListener('click', () => {
-      h3.closest('.panel').classList.toggle('collapsed');
-    });
-  });
 }
 
 // ============================================================

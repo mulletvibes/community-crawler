@@ -89,13 +89,8 @@ body {
 }
 
 #message-panel {
-  flex: 1.5;
+  flex: 1;
   min-width: 0;
-}
-
-#codex-panel {
-  width: 220px;
-  flex-shrink: 0;
 }
 
 #chat-panel {
@@ -172,76 +167,6 @@ body {
 
 #message-list div:last-child {
   color: #e0e0e0;
-}
-
-/* ── Collapsible panels ───────────────────────────────────── */
-
-.panel.collapsible .panel-toggle {
-  cursor: pointer;
-  user-select: none;
-  display: flex;
-  align-items: center;
-  margin-bottom: 0;
-  padding-bottom: 0;
-  border-bottom: none;
-}
-
-.panel.collapsible .panel-body {
-  border-top: 1px solid var(--border);
-  margin-top: 8px;
-}
-
-.panel.collapsible.collapsed .panel-body {
-  display: none;
-}
-
-.toggle-icon {
-  font-size: 0.75rem;
-  margin-left: auto;
-  letter-spacing: 0;
-  transition: transform 0.15s ease;
-  line-height: 1;
-}
-
-.panel.collapsible.collapsed .toggle-icon {
-  transform: rotate(-90deg);
-}
-
-#codex-list {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  padding-top: 6px;
-}
-
-.codex-entry {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  font-size: 0.78rem;
-}
-
-.codex-char {
-  font-size: 1rem;
-  line-height: 1;
-  min-width: 14px;
-  text-align: center;
-  padding-top: 1px;
-}
-
-.codex-info {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-
-.codex-name {
-  color: #ddd;
-}
-
-.codex-desc {
-  color: var(--dim);
-  font-size: 0.72rem;
 }
 
 /* ── Vote panel ───────────────────────────────────────────── */
@@ -608,28 +533,32 @@ body {
     display: none;
   }
 
-  /* Bottom section stacks vertically */
-  #game-bottom {
-    flex-direction: column;
-  }
-
-  #codex-panel {
-    width: auto;
-  }
-
   #message-list {
     max-height: 120px;
   }
 }
 
-@media (max-width: 480px) {
-  #control-col {
-    width: 130px;
+@media (max-width: 768px) {
+  body {
+    padding: 10px 8px 30px;
   }
 
-  .vote-btn {
-    font-size: 0.68rem;
-    padding: 7px 5px;
+  /* Single full-width column: map → stats → vote → log → chat */
+  #game-top {
+    flex-direction: column;
+  }
+
+  #canvas-col {
+    flex: none;
+    width: 100%;
+  }
+
+  #control-col {
+    width: 100%;
+  }
+
+  #game-bottom {
+    flex-direction: column;
   }
 
   #death-screen {
